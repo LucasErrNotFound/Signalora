@@ -5,15 +5,17 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:Signalora.ViewModels"
     xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns:avalonia="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
     xmlns:converters="clr-namespace:Signalora.Converters"
     xmlns:scroll="using:Xaml.Behaviors.Interactions.Animated"
     mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:DataType="vm:DashboardViewModel"
     x:Class="Signalora.Views.DashboardView">
-    
+
     <Design.DataContext>
         <vm:DashboardViewModel />
     </Design.DataContext>
-    
+
     <DockPanel LastChildFill="True">
         <StackPanel
             MaxWidth="{StaticResource PageMaxWidth}"
@@ -23,7 +25,7 @@
                 FontSize="30"
                 FontWeight="SemiBold"
                 Text="Dashboard"
-                Margin="90,30,0,0"/>
+                Margin="90,30,0,0" />
             <TextBlock
                 Classes="Caption Muted"
                 FontSize="14"
@@ -33,20 +35,19 @@
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <Interaction.Behaviors>
-                <scroll:VerticalScrollViewerAnimatedBehavior/>
+                <scroll:VerticalScrollViewerAnimatedBehavior />
             </Interaction.Behaviors>
             <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Margin="48,0,48,0" Spacing="16">
                 <UniformGrid Margin="40,20,40,0" Columns="4" ColumnSpacing="25">
-                    
                     <shadui:Card>
                         <StackPanel>
                             <Grid ColumnDefinitions="* Auto">
                                 <TextBlock Grid.Column="0" Classes="Large" Text="Total Devices" />
                                 <Viewbox Grid.Column="1" Width="25">
-                                    <TextBlock 
-                                        Classes="LucideIcon" 
-                                        Text="&#58483;"
-                                        Foreground="#D97757"/>
+                                    <TextBlock
+                                        Classes="LucideIcon"
+                                        Text="&#57764;"
+                                        Foreground="#D97757" />
                                 </Viewbox>
                             </Grid>
                             <TextBlock
@@ -61,16 +62,15 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </shadui:Card>
-                    
                     <shadui:Card>
                         <StackPanel>
                             <Grid ColumnDefinitions="* Auto">
                                 <TextBlock Grid.Column="0" Classes="Large" Text="Network Activity" />
                                 <Viewbox Grid.Column="1" Width="25">
-                                    <TextBlock 
-                                        Classes="LucideIcon" 
+                                    <TextBlock
+                                        Classes="LucideIcon"
                                         Text="&#57400;"
-                                        Foreground="#D97757"/>
+                                        Foreground="#D97757" />
                                 </Viewbox>
                             </Grid>
                             <TextBlock
@@ -85,16 +85,15 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </shadui:Card>
-                    
                     <shadui:Card>
                         <StackPanel>
                             <Grid ColumnDefinitions="* Auto">
                                 <TextBlock Grid.Column="0" Classes="Large" Text="Signal Strength" />
                                 <Viewbox Grid.Column="1" Width="25">
-                                    <TextBlock 
-                                        Classes="LucideIcon" 
+                                    <TextBlock
+                                        Classes="LucideIcon"
                                         Text="&#57774;"
-                                        Foreground="#D97757"/>
+                                        Foreground="#D97757" />
                                 </Viewbox>
                             </Grid>
                             <TextBlock
@@ -109,16 +108,15 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </shadui:Card>
-                    
                     <shadui:Card>
                         <StackPanel>
                             <Grid ColumnDefinitions="* Auto">
                                 <TextBlock Grid.Column="0" Classes="Large" Text="Security Status" />
                                 <Viewbox Grid.Column="1" Width="25">
-                                    <TextBlock 
-                                        Classes="LucideIcon" 
+                                    <TextBlock
+                                        Classes="LucideIcon"
                                         Text="&#57692;"
-                                        Foreground="#D97757"/>
+                                        Foreground="#D97757" />
                                 </Viewbox>
                             </Grid>
                             <TextBlock
@@ -133,8 +131,98 @@
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </shadui:Card>
-                    
                 </UniformGrid>
+
+                <Grid Margin="40,0,40,0" ColumnDefinitions="4* 2*" ColumnSpacing="25">
+                    <shadui:Card Grid.Column="0">
+                        <StackPanel>
+                            <Grid ColumnDefinitions="* Auto">
+                                <StackPanel Grid.Column="0">
+                                    <shadui:CardTitle Content="Total Devices" />
+                                    <shadui:CardDescription
+                                        Content="The total number of devices that have been connected for the past 7 days" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <CalendarDatePicker
+                                        shadui:ControlAssist.ReadOnly="True"
+                                        SelectedDate="{CompiledBinding DevicesSelectedDate}" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Margin="0,25,0,0">
+                                <avalonia:CartesianChart
+                                    Background="{DynamicResource WindowBackgroundColor}"
+                                    Height="450"
+                                    Series="{CompiledBinding DevicesSeriesCollection}"
+                                    XAxes="{CompiledBinding DevicesLineChartXAxes}"
+                                    LegendPosition="Bottom">
+                                </avalonia:CartesianChart>
+                            </StackPanel>
+                        </StackPanel>
+                    </shadui:Card>
+                    <shadui:Card Grid.Column="1">
+                        <DockPanel Height="515" LastChildFill="True">
+                            <StackPanel DockPanel.Dock="Top">
+                                <shadui:CardTitle Content="Connected Devices" />
+                                <shadui:CardDescription Content="Real-time overview of all devices on your network" />
+                            </StackPanel>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <Interaction.Behaviors>
+                                    <scroll:VerticalScrollViewerAnimatedBehavior />
+                                </Interaction.Behaviors>
+
+                                <ItemsControl ItemsSource="{CompiledBinding ConnectedDevices}" Margin="0,20,0,0">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" Spacing="15" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <shadui:Card Margin="0,0,10,0">
+                                                <Grid ColumnDefinitions="Auto *" ColumnSpacing="10">
+                                                    <shadui:Card
+                                                        Grid.Column="0"
+                                                        HorizontalAlignment="Left"
+                                                        Padding="10"
+                                                        CornerRadius="7"
+                                                        Background="{DynamicResource WindowBackgroundColor}">
+                                                        <Viewbox Width="30">
+                                                            <TextBlock
+                                                                Classes="LucideIcon"
+                                                                Text="{CompiledBinding Icon}"
+                                                                Foreground="#D97757" />
+                                                        </Viewbox>
+                                                    </shadui:Card>
+                                                    <Grid 
+                                                        Grid.Column="1" 
+                                                        ColumnDefinitions="* Auto">
+                                                        <StackPanel 
+                                                            Grid.Column="0" 
+                                                            Orientation="Vertical"
+                                                            VerticalAlignment="Bottom">
+                                                            <shadui:CardTitle Content="{CompiledBinding Name}" />
+                                                            <TextBlock
+                                                                Text="{CompiledBinding DeviceInfo}"
+                                                                Classes="Caption Muted" />
+                                                        </StackPanel>
+                                                        <StackPanel 
+                                                            Grid.Column="1" 
+                                                            VerticalAlignment="Center">
+                                                            <shadui:Badge 
+                                                                Content="{CompiledBinding Status}"
+                                                                Classes="Primary"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Grid>
+                                            </shadui:Card>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </shadui:Card>
+                </Grid>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>
