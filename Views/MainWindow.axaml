@@ -12,7 +12,10 @@
     Icon="/Assets/avalonia-logo.ico"
     Title="Signalora"
     TitleFontWeight="SemiBold"
-    WindowStartupLocation="CenterScreen">
+    WindowStartupLocation="CenterScreen"
+    MinWidth="1150"
+    MinHeight="720"
+    CanResize="True">
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
