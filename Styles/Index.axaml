@@ -1,0 +1,9 @@
+<Styles
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StyleInclude Source="avares://Signalora/Styles/Window.axaml" />
+    <StyleInclude Source="avares://Signalora/Styles/TextBlock.axaml" />
+    <StyleInclude Source="avares://Signalora/Styles/Tooltip.axaml" />
+    <StyleInclude Source="avares://Signalora/Styles/Menu.axaml" />
+</Styles>

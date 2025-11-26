@@ -1,0 +1,147 @@
+<shadui:Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Signalora.ViewModels"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns:converters="clr-namespace:Signalora.Converters"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="Signalora.Views.MainWindow"
+    x:DataType="vm:MainWindowViewModel"
+    Icon="/Assets/avalonia-logo.ico"
+    Title="Signalora"
+    TitleFontWeight="SemiBold"
+    WindowStartupLocation="CenterScreen">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+    
+    <shadui:Window.Hosts>
+        <shadui:ToastHost Manager="{CompiledBinding ToastManager}" ZIndex="1000"/>
+        <shadui:DialogHost Manager="{CompiledBinding DialogManager}" Owner="{Binding RelativeSource={RelativeSource AncestorType=shadui:Window}}"/>
+    </shadui:Window.Hosts>
+    
+    <shadui:Window.RightWindowTitleBarContent>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button
+                Background="{DynamicResource SidebarBackgroundColor}"
+                Command="{CompiledBinding SwitchThemeCommand}"
+                CornerRadius="{DynamicResource MdCornerRadius}"
+                Height="30"
+                ToolTip.Tip="Switch Theme"
+                Width="30">
+                <TextBlock Classes="LucideIcon" Text="{CompiledBinding CurrentTheme, Converter={x:Static converters:ThemeModeConverters.ToLucideIcon}}" />
+            </Button>
+        </StackPanel>
+    </shadui:Window.RightWindowTitleBarContent>
+    
+    <Panel>
+        <Grid ColumnDefinitions="Auto *">
+            <TransitioningContentControl Grid.Column="1" Content="{CompiledBinding SelectedPage}"/>
+            <shadui:Sidebar
+                Grid.Column="0"
+                Width="257"
+                MinWidth="60"
+                Padding="{CompiledBinding #Toggler.IsChecked, Converter={x:Static converters:BooleanConverters.SidebarPadding}}"
+                BorderBrush="{DynamicResource BorderColor30}"
+                BorderThickness="0,0,1,0"
+                Background="{DynamicResource SidebarBackgroundColor}"
+                CurrentRoute="{CompiledBinding CurrentRoute}"
+                Expanded="{CompiledBinding #Toggler.IsChecked}"
+                ItemIconContentSpacing="12">
+                <shadui:Sidebar.Header>
+                    <ToggleButton
+                        IsChecked="True"
+                        Name="Toggler"
+                        Width="32"
+                        Height="32"
+                        Padding="8"
+                        HorizontalAlignment="{CompiledBinding #Toggler.IsChecked, Converter={x:Static converters:BooleanConverters.SidebarTogglerHorizontalAlignment}}"
+                        CornerRadius="{DynamicResource LgCornerRadius}"
+                        Theme="{DynamicResource SideTogglerTheme}">
+                        <Viewbox>
+                            <TextBlock 
+                                Classes="LucideIcon" 
+                                Text="&#57646;" />
+                        </Viewbox>
+                    </ToggleButton>
+                </shadui:Sidebar.Header>
+                <StackPanel Spacing="4">
+                    <shadui:SidebarItem
+                        Route="dashboard"
+                        Content="Dashboard"
+                        FontSize="15"
+                        IsChecked="True"
+                        Command="{CompiledBinding OpenDashboardCommand}"
+                        ToolTip.Tip="{CompiledBinding $parent[shadui:Sidebar].Expanded, Converter={x:Static converters:BooleanConverters.NullOrString}, ConverterParameter='Dashboard'}">
+                        <shadui:SidebarItem.Icon>
+                            <Viewbox>
+                                <TextBlock 
+                                    Classes="LucideIcon" 
+                                    Text="&#57793;" />
+                            </Viewbox>
+                        </shadui:SidebarItem.Icon>
+                    </shadui:SidebarItem>
+                    <shadui:SidebarItem
+                        Route="devices"
+                        Content="Devices"
+                        FontSize="15"
+                        IsChecked="True"
+                        ToolTip.Tip="{CompiledBinding $parent[shadui:Sidebar].Expanded, Converter={x:Static converters:BooleanConverters.NullOrString}, ConverterParameter='Devices'}">
+                        <shadui:SidebarItem.Icon>
+                            <Viewbox>
+                                <TextBlock 
+                                    Classes="LucideIcon" 
+                                    Text="&#57774;" />
+                            </Viewbox>
+                        </shadui:SidebarItem.Icon>
+                    </shadui:SidebarItem>
+                    <shadui:SidebarItem
+                        Route="activity"
+                        Content="Activity"
+                        FontSize="15"
+                        IsChecked="True"
+                        ToolTip.Tip="{CompiledBinding $parent[shadui:Sidebar].Expanded, Converter={x:Static converters:BooleanConverters.NullOrString}, ConverterParameter='Activity'}">
+                        <shadui:SidebarItem.Icon>
+                            <Viewbox>
+                                <TextBlock 
+                                    Classes="LucideIcon" 
+                                    Text="&#57400;" />
+                            </Viewbox>
+                        </shadui:SidebarItem.Icon>
+                    </shadui:SidebarItem>
+                    <shadui:SidebarItem
+                        Route="analytics"
+                        Content="Analytics"
+                        FontSize="15"
+                        IsChecked="True"
+                        ToolTip.Tip="{CompiledBinding $parent[shadui:Sidebar].Expanded, Converter={x:Static converters:BooleanConverters.NullOrString}, ConverterParameter='Analytics'}">
+                        <shadui:SidebarItem.Icon>
+                            <Viewbox>
+                                <TextBlock 
+                                    Classes="LucideIcon" 
+                                    Text="&#57454;" />
+                            </Viewbox>
+                        </shadui:SidebarItem.Icon>
+                    </shadui:SidebarItem>
+                    <shadui:SidebarItem
+                        Route="security"
+                        Content="Security"
+                        FontSize="15"
+                        IsChecked="True"
+                        ToolTip.Tip="{CompiledBinding $parent[shadui:Sidebar].Expanded, Converter={x:Static converters:BooleanConverters.NullOrString}, ConverterParameter='Security'}">
+                        <shadui:SidebarItem.Icon>
+                            <Viewbox>
+                                <TextBlock 
+                                    Classes="LucideIcon" 
+                                    Text="&#57692;" />
+                            </Viewbox>
+                        </shadui:SidebarItem.Icon>
+                    </shadui:SidebarItem>
+                </StackPanel>
+            </shadui:Sidebar>
+        </Grid>
+    </Panel>
+</shadui:Window>

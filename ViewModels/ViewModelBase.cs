@@ -1,0 +1,159 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace Signalora.ViewModels;
+
+public class ViewModelBase : ObservableValidator, INotifyDataErrorInfo, IDisposable
+{
+    private readonly Dictionary<string, List<string>> _errors = new();
+    public bool HasErrors => _errors.Count != 0;
+    private bool _disposed;
+
+    public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
+
+    protected void SetProperty<T>(ref T field, T value, bool validate = false,
+        [CallerMemberName] string propertyName = null!)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value)) return;
+
+        field = value;
+        OnPropertyChanged(propertyName);
+        if (validate) ValidateProperty(value, propertyName);
+    }
+
+    protected void AddError(string propertyName, string error)
+    {
+        if (!_errors.TryGetValue(propertyName, out var value))
+        {
+            value = ([]);
+            _errors[propertyName] = value;
+        }
+
+        if (value.Contains(error)) return;
+        value.Add(error);
+        OnErrorsChanged(propertyName);
+    }
+
+    protected void ClearErrors(string propertyName)
+    {
+        if (_errors.Remove(propertyName)) OnErrorsChanged(propertyName);
+    }
+
+    protected void ClearAllErrors()
+    {
+        var properties = _errors.Keys.ToList();
+        _errors.Clear();
+        foreach (var property in properties) OnErrorsChanged(property);
+    }
+    
+    public IEnumerable GetErrors(string? propertyName)
+    {
+        if (string.IsNullOrEmpty(propertyName))
+        {
+            return Array.Empty<string>();
+        }
+
+        return _errors.TryGetValue(propertyName, out var errors)
+            ? errors
+            : Array.Empty<string>();
+    }
+
+    private void OnErrorsChanged(string propertyName)
+    {
+        ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(propertyName));
+    }
+    
+    protected void ValidateProperty<T>(T value, string propertyName)
+    {
+        try
+        {
+            ClearErrors(propertyName);
+
+            var validationContext = new ValidationContext(this)
+            {
+                MemberName = propertyName
+            };
+            var validationResults = new List<ValidationResult>();
+
+            object valueToValidate = value;
+            if (value == null && typeof(T).IsGenericType && typeof(T).GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                valueToValidate = null;
+            }
+
+            if (Validator.TryValidateProperty(value, validationContext, validationResults)) return;
+
+            foreach (var validationResult in validationResults)
+                AddError(propertyName, validationResult.ErrorMessage ?? string.Empty);
+        }
+        catch (Exception)
+        {
+            // to avoid closing window
+        }
+    }
+
+    protected void ValidateAllProperties()
+    {
+        var properties = GetType().GetProperties()
+            .Where(prop => prop.GetCustomAttributes(typeof(ValidationAttribute), true).Length != 0);
+
+        foreach (var property in properties)
+        {
+            var value = property.GetValue(this);
+            ValidateProperty(value, property.Name);
+        }
+    }
+    
+    /// <summary>
+    /// Forces a full garbage collection. Use sparingly, only after major cleanup operations.
+    /// </summary>
+    protected void ForceGarbageCollection()
+    {
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        Debug.WriteLine($"[{GetType().Name}] Forced garbage collection completed.");
+    }
+
+    /// <summary>
+    /// Suggests a lightweight garbage collection for generation 0 or 1.
+    /// Use for moderate cleanup operations.
+    /// </summary>
+    protected void SuggestGarbageCollection(int generation = 0)
+    {
+        GC.Collect(generation, GCCollectionMode.Optimized);
+        Debug.WriteLine($"[{GetType().Name}] Suggested Gen{generation} garbage collection.");
+    }
+
+    protected virtual void DisposeManagedResources()
+    {
+        // Override in derived classes to clean up resources
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+
+        if (disposing)
+        {
+            // Dispose managed resources here
+            DisposeManagedResources();
+        }
+
+        _disposed = true;
+    }
+}

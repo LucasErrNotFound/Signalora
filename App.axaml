@@ -1,0 +1,94 @@
+<Application
+    Name="Signalora"
+    xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="Signalora.App"
+    xmlns:local="using:Signalora"
+    RequestedThemeVariant="Default">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+    
+    <NativeMenu.Menu>
+        <NativeMenu />
+    </NativeMenu.Menu>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceInclude Source="Themes/Light.axaml" x:Key="Light" />
+                <ResourceInclude Source="Themes/Dark.axaml" x:Key="Dark" />
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+        <FontFamily x:Key="JetbrainsFont">avares://Signalora/Assets/Fonts#Jetbrains</FontFamily>
+        <FontFamily x:Key="ManropeFont">avares://Signalora/Assets/Fonts#Manrope</FontFamily>
+        <FontFamily x:Key="LucideIcon">avares://Signalora/Assets/Fonts#lucide</FontFamily>
+        <FontFamily x:Key="ShadUIIcon">avares://Signalora/Assets/Fonts#shadui</FontFamily>
+    </Application.Resources>
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <shadui:ShadTheme />
+        <StyleInclude Source="avares://Signalora/Styles/Index.axaml" />
+
+        <!-- Temporary fix for DataGrid Vertical Scrolling -->
+        <Style Selector="DataGrid">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border
+                        x:Name="DataGridBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        ClipToBounds="True"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                        
+                        <Border ClipToBounds="True" CornerRadius="{TemplateBinding CornerRadius}">
+                            <Grid
+                                x:Name="Grid"
+                                ClipToBounds="True"
+                                ColumnDefinitions="*, Auto"
+                                RowDefinitions="Auto,*,Auto">
+                                
+                                <Border
+                                    x:Name="PART_HeaderBackground"
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    BorderBrush="{DynamicResource BorderColor}"
+                                    BorderThickness="0,0,0,1">
+                                    <DataGridColumnHeadersPresenter Name="PART_ColumnHeadersPresenter" />
+                                </Border>
+
+                                <DataGridRowsPresenter
+                                    Name="PART_RowsPresenter"
+                                    Grid.Row="1"
+                                    Grid.Column="0">
+                                    <DataGridRowsPresenter.GestureRecognizers>
+                                        <ScrollGestureRecognizer
+                                            CanHorizontallyScroll="True"
+                                            CanVerticallyScroll="True" />
+                                    </DataGridRowsPresenter.GestureRecognizers>
+                                </DataGridRowsPresenter>
+
+                                <ScrollBar
+                                    Name="PART_VerticalScrollbar"
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    Orientation="Vertical" />
+
+                                <ScrollBar
+                                    Name="PART_HorizontalScrollbar"
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    Orientation="Horizontal" />
+                            </Grid>
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+    </Application.Styles>
+</Application>

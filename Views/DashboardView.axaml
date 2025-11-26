@@ -1,0 +1,141 @@
+<UserControl
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:Signalora.ViewModels"
+    xmlns:shadui="clr-namespace:ShadUI;assembly=ShadUI"
+    xmlns:converters="clr-namespace:Signalora.Converters"
+    xmlns:scroll="using:Xaml.Behaviors.Interactions.Animated"
+    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+    x:Class="Signalora.Views.DashboardView">
+    
+    <Design.DataContext>
+        <vm:DashboardViewModel />
+    </Design.DataContext>
+    
+    <DockPanel LastChildFill="True">
+        <StackPanel
+            MaxWidth="{StaticResource PageMaxWidth}"
+            Margin="{StaticResource PageMargin}"
+            DockPanel.Dock="Top">
+            <TextBlock
+                FontSize="30"
+                FontWeight="SemiBold"
+                Text="Dashboard"
+                Margin="90,30,0,0"/>
+            <TextBlock
+                Classes="Caption Muted"
+                FontSize="14"
+                Text="Your real-time view of WiFi activity and connected devices"
+                TextWrapping="Wrap"
+                Margin="90,0,0,0" />
+        </StackPanel>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Interaction.Behaviors>
+                <scroll:VerticalScrollViewerAnimatedBehavior/>
+            </Interaction.Behaviors>
+            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Margin="48,0,48,0" Spacing="16">
+                <UniformGrid Margin="40,20,40,0" Columns="4" ColumnSpacing="25">
+                    
+                    <shadui:Card>
+                        <StackPanel>
+                            <Grid ColumnDefinitions="* Auto">
+                                <TextBlock Grid.Column="0" Classes="Large" Text="Total Devices" />
+                                <Viewbox Grid.Column="1" Width="25">
+                                    <TextBlock 
+                                        Classes="LucideIcon" 
+                                        Text="&#58483;"
+                                        Foreground="#D97757"/>
+                                </Viewbox>
+                            </Grid>
+                            <TextBlock
+                                Margin="0,8,0,2"
+                                FontSize="25"
+                                FontWeight="Bold"
+                                Text="13"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="13"
+                                Text="8 Active"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </shadui:Card>
+                    
+                    <shadui:Card>
+                        <StackPanel>
+                            <Grid ColumnDefinitions="* Auto">
+                                <TextBlock Grid.Column="0" Classes="Large" Text="Network Activity" />
+                                <Viewbox Grid.Column="1" Width="25">
+                                    <TextBlock 
+                                        Classes="LucideIcon" 
+                                        Text="&#57400;"
+                                        Foreground="#D97757"/>
+                                </Viewbox>
+                            </Grid>
+                            <TextBlock
+                                Margin="0,8,0,2"
+                                FontSize="25"
+                                FontWeight="Bold"
+                                Text="69.5 Mbps"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="13"
+                                Text="Current Bandwidth"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </shadui:Card>
+                    
+                    <shadui:Card>
+                        <StackPanel>
+                            <Grid ColumnDefinitions="* Auto">
+                                <TextBlock Grid.Column="0" Classes="Large" Text="Signal Strength" />
+                                <Viewbox Grid.Column="1" Width="25">
+                                    <TextBlock 
+                                        Classes="LucideIcon" 
+                                        Text="&#57774;"
+                                        Foreground="#D97757"/>
+                                </Viewbox>
+                            </Grid>
+                            <TextBlock
+                                Margin="0,8,0,2"
+                                FontSize="25"
+                                FontWeight="Bold"
+                                Text="90%"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="13"
+                                Text="Excellent Connection"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </shadui:Card>
+                    
+                    <shadui:Card>
+                        <StackPanel>
+                            <Grid ColumnDefinitions="* Auto">
+                                <TextBlock Grid.Column="0" Classes="Large" Text="Security Status" />
+                                <Viewbox Grid.Column="1" Width="25">
+                                    <TextBlock 
+                                        Classes="LucideIcon" 
+                                        Text="&#57692;"
+                                        Foreground="#D97757"/>
+                                </Viewbox>
+                            </Grid>
+                            <TextBlock
+                                Margin="0,8,0,2"
+                                FontSize="25"
+                                FontWeight="Bold"
+                                Text="Secure"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="13"
+                                Text="WPA2 Encryption"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </shadui:Card>
+                    
+                </UniformGrid>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>
