@@ -37,7 +37,7 @@
             <Interaction.Behaviors>
                 <scroll:VerticalScrollViewerAnimatedBehavior />
             </Interaction.Behaviors>
-            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Margin="48,0,48,0" Spacing="16">
+            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Margin="48,0,48,25" Spacing="16">
                 <UniformGrid Margin="40,20,40,0" Columns="4" ColumnSpacing="25">
                     <shadui:Card>
                         <StackPanel>
@@ -221,6 +221,100 @@
                                 </ItemsControl>
                             </ScrollViewer>
                         </DockPanel>
+                    </shadui:Card>
+                </Grid>
+                
+                <Grid ColumnDefinitions="2.4* 3.5*" Margin="40,0,40,0" ColumnSpacing="25">
+                    <shadui:Card Grid.Column="0">
+                        <StackPanel>
+                            <StackPanel>
+                                <shadui:CardTitle Content="Recent Activity" />
+                                <shadui:CardDescription
+                                    Content="Latest network events" />
+                            </StackPanel>
+                        </StackPanel>
+                    </shadui:Card>
+                    
+                    <shadui:Card Grid.Column="1">
+                        <StackPanel>
+                            <StackPanel>
+                                <shadui:CardTitle Content="Network Health" />
+                                <shadui:CardDescription
+                                    Content="Overall performance metrics" />
+                            </StackPanel>
+                            <StackPanel Orientation="Vertical" Spacing="10">
+                                
+                                <!-- Signal Quality -->
+                                <StackPanel Orientation="Vertical" Margin="0,15,0,0" Spacing="5">
+                                    <Grid ColumnDefinitions="* Auto">
+                                        <TextBlock 
+                                            Grid.Column="0"
+                                            Text="Signal Quality"
+                                            FontSize="16"
+                                            FontWeight="Regular"/>
+                                        <TextBlock 
+                                            Grid.Column="1"
+                                            Text="Excellent"
+                                            Foreground="{DynamicResource SuccessColor}"
+                                            FontSize="16"
+                                            FontWeight="Regular"/>
+                                    </Grid>
+                                    <ProgressBar 
+                                        Value="50" 
+                                        Maximum="100"
+                                        Classes="rounded"
+                                        Background="{DynamicResource GhostHoverColor}"
+                                        Foreground="{DynamicResource SuccessColor}"/>
+                                </StackPanel>
+                                
+                                <!-- Bandwidth Usage -->
+                                <StackPanel Orientation="Vertical" Margin="0,15,0,0" Spacing="5">
+                                    <Grid ColumnDefinitions="* Auto">
+                                        <TextBlock 
+                                            Grid.Column="0"
+                                            Text="Bandwidth Usage"
+                                            FontSize="16"
+                                            FontWeight="Regular"/>
+                                        <TextBlock 
+                                            Grid.Column="1"
+                                            Text="69%"
+                                            Foreground="#D97757"
+                                            FontSize="16"
+                                            FontWeight="Regular"/>
+                                    </Grid>
+                                    <ProgressBar 
+                                        Value="69" 
+                                        Maximum="100"
+                                        Classes="rounded"
+                                        Background="{DynamicResource GhostHoverColor}"
+                                        Foreground="#D97757"/>
+                                </StackPanel>
+                                
+                                <!-- Device Load -->
+                                <StackPanel Orientation="Vertical" Margin="0,15,0,0" Spacing="5">
+                                    <Grid ColumnDefinitions="* Auto">
+                                        <TextBlock 
+                                            Grid.Column="0"
+                                            Text="Device Load"
+                                            FontSize="16"
+                                            FontWeight="Regular"/>
+                                        <TextBlock 
+                                            Grid.Column="1"
+                                            Text="Light"
+                                            Foreground="#FABD2F"
+                                            FontSize="16"
+                                            FontWeight="Regular"/>
+                                    </Grid>
+                                    <ProgressBar 
+                                        Value="23" 
+                                        Maximum="100"
+                                        Classes="rounded"
+                                        Background="{DynamicResource GhostHoverColor}"
+                                        Foreground="#FABD2F"/>
+                                </StackPanel>
+                                
+                            </StackPanel>
+                        </StackPanel>
                     </shadui:Card>
                 </Grid>
             </StackPanel>
