@@ -32,6 +32,16 @@
     <Application.Styles>
         <shadui:ShadTheme />
         <StyleInclude Source="avares://Signalora/Styles/Index.axaml" />
+        
+        <Style Selector="ProgressBar.rounded">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+
+        <Style Selector="ProgressBar.rounded /template/ Border">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
 
         <!-- Temporary fix for DataGrid Vertical Scrolling -->
         <Style Selector="DataGrid">
