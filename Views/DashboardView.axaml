@@ -232,6 +232,75 @@
                                 <shadui:CardDescription
                                     Content="Latest network events" />
                             </StackPanel>
+                            <StackPanel Orientation="Vertical" Spacing="15" Margin="0,15,0,0">
+                                
+                                <!-- iPhone Pro Max -->
+                                <StackPanel Orientation="Horizontal">
+                                    <Viewbox Width="50" VerticalAlignment="Top">
+                                        <TextBlock 
+                                            Classes="LucideIcon" 
+                                            Text="&#58452;"
+                                            Foreground="#D97757"/>
+                                    </Viewbox>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock
+                                            Text="Connected"
+                                            FontSize="15"
+                                            FontWeight="Medium"/>
+                                        <TextBlock
+                                            Text="Dave's iPhone 16 Pro Max"
+                                            Classes="Caption"/>
+                                        <TextBlock
+                                            Text="2 min ago"
+                                            Classes="Caption Muted"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                
+                                <!-- MSI Raider Laptop -->
+                                <StackPanel Orientation="Horizontal">
+                                    <Viewbox Width="50" VerticalAlignment="Top">
+                                        <TextBlock 
+                                            Classes="LucideIcon" 
+                                            Text="&#58452;"
+                                            Foreground="#FABD2F"/>
+                                    </Viewbox>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock
+                                            Text="New device connected"
+                                            FontSize="15"
+                                            FontWeight="Medium"/>
+                                        <TextBlock
+                                            Text="MSI Raider Laptop"
+                                            Classes="Caption"/>
+                                        <TextBlock
+                                            Text="5 min ago"
+                                            Classes="Caption Muted"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                
+                                <!-- Thinkpad Laptop -->
+                                <StackPanel Orientation="Horizontal">
+                                    <Viewbox Width="50" VerticalAlignment="Top">
+                                        <TextBlock 
+                                            Classes="LucideIcon" 
+                                            Text="&#58452;"
+                                            Foreground="#D97757"/>
+                                    </Viewbox>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock
+                                            Text="Device disconnected"
+                                            FontSize="15"
+                                            FontWeight="Medium"/>
+                                        <TextBlock
+                                            Text="Thinkpad Laptop"
+                                            Classes="Caption"/>
+                                        <TextBlock
+                                            Text="7 min ago"
+                                            Classes="Caption Muted"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                
+                            </StackPanel>
                         </StackPanel>
                     </shadui:Card>
                     
