@@ -35,7 +35,107 @@
             <Interaction.Behaviors>
                 <scroll:VerticalScrollViewerAnimatedBehavior />
             </Interaction.Behaviors>
-            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Margin="48,0,48,25" Spacing="16">
+            <StackPanel MaxWidth="{StaticResource PageMaxWidth}" Margin="90,45,90,25" Spacing="16">
+                <shadui:Card>
+                    <StackPanel>
+                        <Grid 
+                            ColumnDefinitions="Auto Auto *" 
+                            Margin="0,0,0,20"
+                            ColumnSpacing="20">
+                            
+                            <!-- Search Box -->
+                            <TextBox 
+                                Grid.Column="0"
+                                Classes="Clearable"
+                                Width="400"
+                                Watermark="Search for devices...">
+                                <TextBox.InnerRightContent>
+                                    <PathIcon
+                                        Data="{x:Static shadui:Icons.Search}"
+                                        Opacity="0.75"
+                                        Width="16" />
+                                </TextBox.InnerRightContent>
+                            </TextBox>
+                            
+                            <!-- Filter ComboBox -->
+                            <ComboBox 
+                                Grid.Column="1"
+                                Width="180">
+                            </ComboBox>
+                        </Grid>
+                        
+                        <!-- DataGrid of Devices -->
+                        <DataGrid
+                            Height="700"
+                            CanUserReorderColumns="False"
+                            CanUserResizeColumns="False"
+                            CanUserSortColumns="False"
+                            IsReadOnly="True"
+                            GridLinesVisibility="All"
+                            SelectionMode="Single"
+                            HeadersVisibility="Column">
+                            
+                            <DataGrid.Styles>
+                                <Style Selector="TextBlock">
+                                    <Setter Property="TextWrapping" Value="WrapWithOverflow" />
+                                </Style>
+                            </DataGrid.Styles>
+                            
+                            <DataGrid.Columns>
+                                
+                                <!-- Device ID -->
+                                <DataGridTextColumn
+                                    IsReadOnly="True"
+                                    Width="Auto"
+                                    MinWidth="120"
+                                    Header="Device ID" />
+                                
+                                <!-- MAC Address -->
+                                <DataGridTextColumn
+                                    IsReadOnly="True"
+                                    Width="*"
+                                    MinWidth="150"
+                                    Header="MAC Address" />
+                                
+                                <!-- IP Address -->
+                                <DataGridTextColumn
+                                    IsReadOnly="True"
+                                    Width="*"
+                                    MinWidth="150"
+                                    Header="IP Address" />
+                                
+                                <!-- Device Name -->
+                                <DataGridTextColumn
+                                    IsReadOnly="True"
+                                    Width="*"
+                                    MinWidth="150"
+                                    Header="Device Name" />
+                                
+                                <!-- Category -->
+                                <DataGridTextColumn
+                                    IsReadOnly="True"
+                                    Width="*"
+                                    MinWidth="150"
+                                    Header="Category" />
+                                
+                                <!-- Signal Strength -->
+                                <DataGridTextColumn
+                                    IsReadOnly="True"
+                                    Width="*"
+                                    MinWidth="150"
+                                    Header="Signal Strength" />
+                                
+                                <!-- Connection -->
+                                <DataGridTextColumn
+                                    IsReadOnly="True"
+                                    Width="*"
+                                    MinWidth="150"
+                                    Header="Connection" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        
+                    </StackPanel>
+                </shadui:Card>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>
