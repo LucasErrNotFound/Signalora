@@ -92,6 +92,7 @@
                         Content="Devices"
                         FontSize="15"
                         IsChecked="True"
+                        Command="{CompiledBinding OpenDevicesCommand}"
                         ToolTip.Tip="{CompiledBinding $parent[shadui:Sidebar].Expanded, Converter={x:Static converters:BooleanConverters.NullOrString}, ConverterParameter='Devices'}">
                         <shadui:SidebarItem.Icon>
                             <Viewbox>

@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HotAvalonia;
 using ShadUI;
+using Signalora.Views;
 
 namespace Signalora.ViewModels;
 
@@ -18,6 +19,7 @@ public partial class MainWindowViewModel : ViewModelBase, INavigable
     private readonly PageManager _pageManager;
     private readonly ThemeWatcher _themeWatcher;
     private readonly DashboardViewModel _dashboardViewModel;
+    private readonly DevicesViewModel _devicesViewModel;
     
     private ThemeMode _currentTheme;
 
@@ -25,7 +27,8 @@ public partial class MainWindowViewModel : ViewModelBase, INavigable
         ToastManager toastManager, 
         PageManager pageManager,
         ThemeWatcher themeWatcher,
-        DashboardViewModel dashboardViewModel)
+        DashboardViewModel dashboardViewModel,
+        DevicesViewModel devicesViewModel)
     {
         _dialogManager = dialogManager;
         _toastManager = toastManager;
@@ -33,6 +36,7 @@ public partial class MainWindowViewModel : ViewModelBase, INavigable
         _themeWatcher =  themeWatcher;
         
         _dashboardViewModel = dashboardViewModel;
+        _devicesViewModel = devicesViewModel;
         
         _pageManager.OnNavigate = SwitchPage;
     }
@@ -44,6 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase, INavigable
         _pageManager = new PageManager(new ServiceProvider());
 
         _dashboardViewModel = new DashboardViewModel();
+        _devicesViewModel = new DevicesViewModel();
     }
     
     [AvaloniaHotReload]
@@ -92,4 +97,5 @@ public partial class MainWindowViewModel : ViewModelBase, INavigable
     }
     
     [RelayCommand] private void OpenDashboard() => SwitchPage(_dashboardViewModel);
+    [RelayCommand] private void OpenDevices() => SwitchPage(_devicesViewModel);
 }
