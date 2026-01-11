@@ -8,6 +8,7 @@ namespace Signalora;
 [ServiceProvider]
 [Transient<MainWindowViewModel>]
 [Transient<DashboardViewModel>]
+[Transient<DevicesViewModel>]
 [Singleton<DialogManager>]
 [Singleton<ToastManager>]
 [Singleton(typeof(PageManager), Factory = nameof(PageManagerFactory))]
