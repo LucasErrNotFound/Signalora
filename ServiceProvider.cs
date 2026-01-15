@@ -1,6 +1,8 @@
 using Avalonia;
 using Jab;
 using ShadUI;
+using Signalora.Services;
+using Signalora.Services.Interface;
 using Signalora.ViewModels;
 
 namespace Signalora;
@@ -11,6 +13,7 @@ namespace Signalora;
 [Transient<DevicesViewModel>]
 [Singleton<DialogManager>]
 [Singleton<ToastManager>]
+[Singleton<INetworkScanner, NetworkScanner>]
 [Singleton(typeof(PageManager), Factory = nameof(PageManagerFactory))]
 [Singleton(typeof(ThemeWatcher), Factory = nameof(ThemeWatcherFactory))]
 
