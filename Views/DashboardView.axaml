@@ -15,6 +15,10 @@
     <Design.DataContext>
         <vm:DashboardViewModel />
     </Design.DataContext>
+    
+    <UserControl.Resources>
+        <converters:ActivityTypeToColorConverter x:Key="ActivityTypeToColorConverter" />
+    </UserControl.Resources>
 
     <DockPanel LastChildFill="True">
         <StackPanel
@@ -54,12 +58,14 @@
                                 Margin="0,8,0,2"
                                 FontSize="25"
                                 FontWeight="Bold"
-                                Text="13"
+                                Text="{CompiledBinding TotalDevices}"
                                 TextWrapping="Wrap" />
                             <TextBlock
                                 FontSize="13"
-                                Text="8 Active"
-                                TextWrapping="Wrap" />
+                                TextWrapping="Wrap">
+                                <Run Text="{CompiledBinding ActiveDevices}" />
+                                <Run Text=" Active" />
+                            </TextBlock>
                         </StackPanel>
                     </shadui:Card>
                     <shadui:Card>
@@ -77,8 +83,10 @@
                                 Margin="0,8,0,2"
                                 FontSize="25"
                                 FontWeight="Bold"
-                                Text="69.5 Mbps"
-                                TextWrapping="Wrap" />
+                                TextWrapping="Wrap">
+                                <Run Text="{CompiledBinding CurrentBandwidth, StringFormat='{}{0:F1}'}" />
+                                <Run Text=" Mbps" />
+                            </TextBlock>
                             <TextBlock
                                 FontSize="13"
                                 Text="Current Bandwidth"
@@ -100,11 +108,13 @@
                                 Margin="0,8,0,2"
                                 FontSize="25"
                                 FontWeight="Bold"
-                                Text="90%"
-                                TextWrapping="Wrap" />
+                                TextWrapping="Wrap">
+                                <Run Text="{CompiledBinding SignalQuality}" />
+                                <Run Text="%" />
+                            </TextBlock>
                             <TextBlock
                                 FontSize="13"
-                                Text="Excellent Connection"
+                                Text="Network Quality"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </shadui:Card>
@@ -123,7 +133,7 @@
                                 Margin="0,8,0,2"
                                 FontSize="25"
                                 FontWeight="Bold"
-                                Text="Secure"
+                                Text="{CompiledBinding SecurityStatus}"
                                 TextWrapping="Wrap" />
                             <TextBlock
                                 FontSize="13"
@@ -232,75 +242,43 @@
                                 <shadui:CardDescription
                                     Content="Latest network events" />
                             </StackPanel>
-                            <StackPanel Orientation="Vertical" Spacing="15" Margin="0,15,0,0">
-                                
-                                <!-- iPhone Pro Max -->
-                                <StackPanel Orientation="Horizontal">
-                                    <Viewbox Width="50" VerticalAlignment="Top">
-                                        <TextBlock 
-                                            Classes="LucideIcon" 
-                                            Text="&#58452;"
-                                            Foreground="#D97757"/>
-                                    </Viewbox>
-                                    <StackPanel Orientation="Vertical">
-                                        <TextBlock
-                                            Text="Connected"
-                                            FontSize="15"
-                                            FontWeight="Medium"/>
-                                        <TextBlock
-                                            Text="Dave's iPhone 16 Pro Max"
-                                            Classes="Caption"/>
-                                        <TextBlock
-                                            Text="2 min ago"
-                                            Classes="Caption Muted"/>
-                                    </StackPanel>
-                                </StackPanel>
-                                
-                                <!-- MSI Raider Laptop -->
-                                <StackPanel Orientation="Horizontal">
-                                    <Viewbox Width="50" VerticalAlignment="Top">
-                                        <TextBlock 
-                                            Classes="LucideIcon" 
-                                            Text="&#58452;"
-                                            Foreground="#FABD2F"/>
-                                    </Viewbox>
-                                    <StackPanel Orientation="Vertical">
-                                        <TextBlock
-                                            Text="New device connected"
-                                            FontSize="15"
-                                            FontWeight="Medium"/>
-                                        <TextBlock
-                                            Text="MSI Raider Laptop"
-                                            Classes="Caption"/>
-                                        <TextBlock
-                                            Text="5 min ago"
-                                            Classes="Caption Muted"/>
-                                    </StackPanel>
-                                </StackPanel>
-                                
-                                <!-- Thinkpad Laptop -->
-                                <StackPanel Orientation="Horizontal">
-                                    <Viewbox Width="50" VerticalAlignment="Top">
-                                        <TextBlock 
-                                            Classes="LucideIcon" 
-                                            Text="&#58452;"
-                                            Foreground="#D97757"/>
-                                    </Viewbox>
-                                    <StackPanel Orientation="Vertical">
-                                        <TextBlock
-                                            Text="Device disconnected"
-                                            FontSize="15"
-                                            FontWeight="Medium"/>
-                                        <TextBlock
-                                            Text="Thinkpad Laptop"
-                                            Classes="Caption"/>
-                                        <TextBlock
-                                            Text="7 min ago"
-                                            Classes="Caption Muted"/>
-                                    </StackPanel>
-                                </StackPanel>
-                                
-                            </StackPanel>
+                            <ScrollViewer 
+                                Height="250"
+                                VerticalScrollBarVisibility="Auto"
+                                Margin="0,15,0,0">
+                                <ItemsControl ItemsSource="{CompiledBinding RecentActivities}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" Spacing="15" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Viewbox Width="50" VerticalAlignment="Top">
+                                                    <TextBlock 
+                                                        Classes="LucideIcon" 
+                                                        Text="&#58452;"
+                                                        Foreground="{CompiledBinding Type, Converter={StaticResource ActivityTypeToColorConverter}}" />
+                                                </Viewbox>
+                                                <StackPanel Orientation="Vertical">
+                                                    <TextBlock
+                                                        Text="{CompiledBinding Action}"
+                                                        FontSize="15"
+                                                        FontWeight="Medium"/>
+                                                    <TextBlock
+                                                        Text="{CompiledBinding DeviceName}"
+                                                        Classes="Caption"/>
+                                                    <TextBlock
+                                                        Text="{CompiledBinding TimeAgo}"
+                                                        Classes="Caption Muted"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
                         </StackPanel>
                     </shadui:Card>
                     
@@ -323,13 +301,14 @@
                                             FontWeight="Regular"/>
                                         <TextBlock 
                                             Grid.Column="1"
-                                            Text="Excellent"
-                                            Foreground="{DynamicResource SuccessColor}"
                                             FontSize="16"
-                                            FontWeight="Regular"/>
+                                            FontWeight="Regular">
+                                            <Run Text="{CompiledBinding SignalQuality}" />
+                                            <Run Text="%" />
+                                        </TextBlock>
                                     </Grid>
                                     <ProgressBar 
-                                        Value="50" 
+                                        Value="{CompiledBinding SignalQuality}" 
                                         Maximum="100"
                                         Classes="rounded"
                                         Background="{DynamicResource GhostHoverColor}"
@@ -346,13 +325,15 @@
                                             FontWeight="Regular"/>
                                         <TextBlock 
                                             Grid.Column="1"
-                                            Text="69%"
                                             Foreground="#D97757"
                                             FontSize="16"
-                                            FontWeight="Regular"/>
+                                            FontWeight="Regular">
+                                            <Run Text="{CompiledBinding CurrentBandwidth, StringFormat='{}{0:F1}'}" />
+                                            <Run Text=" Mbps" />
+                                        </TextBlock>
                                     </Grid>
                                     <ProgressBar 
-                                        Value="69" 
+                                        Value="{CompiledBinding CurrentBandwidth}" 
                                         Maximum="100"
                                         Classes="rounded"
                                         Background="{DynamicResource GhostHoverColor}"
@@ -369,14 +350,16 @@
                                             FontWeight="Regular"/>
                                         <TextBlock 
                                             Grid.Column="1"
-                                            Text="Light"
                                             Foreground="#FABD2F"
                                             FontSize="16"
-                                            FontWeight="Regular"/>
+                                            FontWeight="Regular">
+                                            <Run Text="{CompiledBinding ActiveDevices}" />
+                                            <Run Text=" devices" />
+                                        </TextBlock>
                                     </Grid>
                                     <ProgressBar 
-                                        Value="23" 
-                                        Maximum="100"
+                                        Value="{CompiledBinding ActiveDevices}" 
+                                        Maximum="20"
                                         Classes="rounded"
                                         Background="{DynamicResource GhostHoverColor}"
                                         Foreground="#FABD2F"/>
