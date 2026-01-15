@@ -48,7 +48,8 @@
                                 Grid.Column="0"
                                 Classes="Clearable"
                                 Width="400"
-                                Watermark="Search for devices...">
+                                Watermark="Search for devices..."
+                                Text="{CompiledBinding SearchText}">
                                 <TextBox.InnerRightContent>
                                     <PathIcon
                                         Data="{x:Static shadui:Icons.Search}"
@@ -60,9 +61,37 @@
                             <!-- Filter ComboBox -->
                             <ComboBox 
                                 Grid.Column="1"
-                                Width="180">
+                                Width="180"
+                                ItemsSource="{CompiledBinding FilterOptions}"
+                                SelectedItem="{CompiledBinding SelectedFilter}">
                             </ComboBox>
+                            
+                            <Button 
+                                Classes="Primary"
+                                HorizontalAlignment="Right"
+                                Grid.Column="2"
+                                Command="{CompiledBinding ScanNetworkCommand}"
+                                IsEnabled="{CompiledBinding !IsScanning}"
+                                ToolTip.Tip="Scan Network">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock 
+                                        Classes="LucideIcon" 
+                                        Text="&#57958;" />
+                                    <TextBlock Text="Scan Network" />
+                                </StackPanel>
+                            </Button>
                         </Grid>
+                        
+                        <!-- Loading Indicator -->
+                        <StackPanel 
+                            Margin="0,10,0,10"
+                            IsVisible="{CompiledBinding IsScanning}"
+                            HorizontalAlignment="Center">
+                            <TextBlock 
+                                Text="Scanning network..." 
+                                Classes="Caption Muted"
+                                HorizontalAlignment="Center" />
+                        </StackPanel>
                         
                         <!-- DataGrid of Devices -->
                         <DataGrid
@@ -73,7 +102,8 @@
                             IsReadOnly="True"
                             GridLinesVisibility="All"
                             SelectionMode="Single"
-                            HeadersVisibility="Column">
+                            HeadersVisibility="Column"
+                            ItemsSource="{CompiledBinding FilteredDevices}">
                             
                             <DataGrid.Styles>
                                 <Style Selector="TextBlock">
@@ -88,49 +118,56 @@
                                     IsReadOnly="True"
                                     Width="Auto"
                                     MinWidth="120"
-                                    Header="Device ID" />
+                                    Header="Device ID" 
+                                    Binding="{CompiledBinding Id}" />
                                 
                                 <!-- MAC Address -->
                                 <DataGridTextColumn
                                     IsReadOnly="True"
                                     Width="*"
                                     MinWidth="150"
-                                    Header="MAC Address" />
+                                    Header="MAC Address"
+                                    Binding="{CompiledBinding MacAddress}"/>
                                 
                                 <!-- IP Address -->
                                 <DataGridTextColumn
                                     IsReadOnly="True"
                                     Width="*"
                                     MinWidth="150"
-                                    Header="IP Address" />
+                                    Header="IP Address"
+                                    Binding="{CompiledBinding IpAddress}" />
                                 
                                 <!-- Device Name -->
                                 <DataGridTextColumn
                                     IsReadOnly="True"
                                     Width="*"
                                     MinWidth="150"
-                                    Header="Device Name" />
+                                    Header="Device Name"
+                                    Binding="{CompiledBinding Name}" />
                                 
                                 <!-- Category -->
                                 <DataGridTextColumn
                                     IsReadOnly="True"
                                     Width="*"
                                     MinWidth="150"
-                                    Header="Category" />
+                                    Header="Category"
+                                    Binding="{CompiledBinding Category}" />
                                 
                                 <!-- Signal Strength -->
                                 <DataGridTextColumn
                                     IsReadOnly="True"
                                     Width="*"
                                     MinWidth="150"
-                                    Header="Signal Strength" />
+                                    Header="Signal Strength"
+                                    Binding="{CompiledBinding SignalStrength}" />
                                 
                                 <!-- Connection -->
                                 <DataGridTextColumn
                                     IsReadOnly="True"
                                     Width="*"
                                     MinWidth="150"
-                                    Header="Connection" />
+                                    Header="Connection"
+                                    Binding="{CompiledBinding Connection}" />
                             </DataGrid.Columns>
                         </DataGrid>
                         
