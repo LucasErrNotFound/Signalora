@@ -95,18 +95,23 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
                 switch (changeType)
                 {
                     case DeviceChangeType.Connected:
-                        ConnectedDevices.Add(device);
-                        AddActivityLog("Connected", device.Name, "success");
-                        
-                        _toastManager
-                            .CreateToast("Device Connected")
-                            .WithContent($"{device.Name} joined the network")
-                            .DismissOnClick()
-                            .ShowSuccess();
+                        // Check if device already exists using MAC address
+                        var existingByMac = ConnectedDevices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
+                        if (existingByMac == null)
+                        {
+                            ConnectedDevices.Add(device);
+                            AddActivityLog("Connected", device.Name, "success");
+                            
+                            _toastManager
+                                .CreateToast("Device Connected")
+                                .WithContent($"{device.Name} joined the network")
+                                .DismissOnClick()
+                                .ShowSuccess();
+                        }
                         break;
 
                     case DeviceChangeType.Disconnected:
-                        var disconnected = ConnectedDevices.FirstOrDefault(d => d.IpAddress == device.IpAddress);
+                        var disconnected = ConnectedDevices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
                         if (disconnected != null)
                         {
                             disconnected.Status = "Disconnected";
@@ -115,11 +120,14 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
                         break;
 
                     case DeviceChangeType.Updated:
-                        var existing = ConnectedDevices.FirstOrDefault(d => d.IpAddress == device.IpAddress);
+                        var existing = ConnectedDevices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
                         if (existing != null)
                         {
+                            // Update properties without recreating the object
                             existing.SignalStrength = device.SignalStrength;
                             existing.Status = device.Status;
+                            existing.IpAddress = device.IpAddress;
+                            existing.Name = device.Name;
                         }
                         break;
                 }
@@ -202,8 +210,8 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
 
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                DevicesSeriesCollection = new ISeries[]
-                {
+                DevicesSeriesCollection =
+                [
                     new LineSeries<double>
                     {
                         Name = "Mobile",
@@ -226,10 +234,10 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
                         GeometryStroke = null,
                         LineSmoothness = 0.3
                     }
-                };
+                ];
 
-                DevicesLineChartXAxes = new Axis[]
-                {
+                DevicesLineChartXAxes =
+                [
                     new Axis
                     {
                         Labels = days.ToArray(),
@@ -237,7 +245,7 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
                         TextSize = 12,
                         MinStep = 1
                     }
-                };
+                ];
             });
         });
     }
