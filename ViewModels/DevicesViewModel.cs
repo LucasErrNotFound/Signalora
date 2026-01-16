@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -28,6 +29,12 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
     private readonly ToastManager _toastManager;
     private readonly PageManager _pageManager;
     private readonly INetworkScanner _networkScanner;
+    private Timer _autoScanTimer;
+    private bool _isInitialized = false;
+
+    // Events to notify other ViewModels about device changes
+    public event Action<ObservableCollection<DeviceModel>> DevicesUpdated;
+    public event Action<DeviceModel, DeviceChangeType> DeviceChanged;
 
     public ObservableCollection<string> FilterOptions { get; } = new()
     {
@@ -45,9 +52,6 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
         _toastManager = toastManager;
         _pageManager = pageManager;
         _networkScanner = networkScanner;
-        
-        _ = ScanNetworkAsync();
-        StartMonitoring();
     }
 
     public DevicesViewModel()
@@ -61,11 +65,19 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
     [AvaloniaHotReload]
     public void Initialize()
     {
+        if (_isInitialized) return;
+        
+        _isInitialized = true;
+        _ = ScanNetworkAsync();
+        StartMonitoring();
+        StartAutoScan();
     }
     
     [RelayCommand]
     private async Task ScanNetworkAsync()
     {
+        if (IsScanning) return;
+        
         IsScanning = true;
         
         try
@@ -74,7 +86,6 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
             
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                // Clear existing devices before adding new ones
                 Devices.Clear();
                 
                 foreach (var device in devices)
@@ -85,6 +96,9 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                 
                 UpdateStatistics();
                 ApplyFilters();
+                
+                // Notify other ViewModels about the update
+                DevicesUpdated?.Invoke(Devices);
                 
                 _toastManager
                     .CreateToast("Scan Complete")
@@ -110,6 +124,15 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
         }
     }
 
+    private void StartAutoScan()
+    {
+        // Auto-scan every 8 seconds (configurable)
+        _autoScanTimer = new Timer(async _ =>
+        {
+            await ScanNetworkAsync();
+        }, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
     private void StartMonitoring()
     {
         _networkScanner.StartMonitoring((device, changeType) =>
@@ -119,7 +142,6 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                 switch (changeType)
                 {
                     case DeviceChangeType.Connected:
-                        // Check if device already exists (using MAC address as unique identifier)
                         var existingByMac = Devices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
                         if (existingByMac == null)
                         {
@@ -131,6 +153,9 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                                 .WithContent($"{device.Name} ({device.IpAddress})")
                                 .DismissOnClick()
                                 .ShowSuccess();
+                            
+                            // Notify subscribers about the change
+                            DeviceChanged?.Invoke(device, changeType);
                         }
                         break;
 
@@ -145,6 +170,9 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                                 .WithContent($"{device.Name} ({device.IpAddress})")
                                 .DismissOnClick()
                                 .ShowWarning();
+                            
+                            // Notify subscribers about the change
+                            DeviceChanged?.Invoke(disconnectedDevice, changeType);
                         }
                         break;
 
@@ -152,17 +180,22 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                         var existingDevice = Devices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
                         if (existingDevice != null)
                         {
-                            // Update properties without recreating the object
                             existingDevice.SignalStrength = device.SignalStrength;
                             existingDevice.Status = device.Status;
-                            existingDevice.IpAddress = device.IpAddress; // IP might have changed
+                            existingDevice.IpAddress = device.IpAddress;
                             existingDevice.Name = device.Name;
+                            
+                            // Notify subscribers about the change
+                            DeviceChanged?.Invoke(existingDevice, changeType);
                         }
                         break;
                 }
                 
                 UpdateStatistics();
                 ApplyFilters();
+                
+                // Notify other ViewModels
+                DevicesUpdated?.Invoke(Devices);
             });
         });
     }
@@ -188,7 +221,6 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
     {
         var filtered = Devices.AsEnumerable();
 
-        // Apply search filter
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             filtered = filtered.Where(d =>
@@ -197,7 +229,6 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                 d.MacAddress.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        // Apply category/status filter
         if (SelectedFilter != "All")
         {
             if (SelectedFilter == "Active" || SelectedFilter == "Disconnected")
@@ -219,6 +250,7 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
 
     protected override void DisposeManagedResources()
     {
+        _autoScanTimer?.Dispose();
         _networkScanner.StopMonitoring();
         base.DisposeManagedResources();
     }

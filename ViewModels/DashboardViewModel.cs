@@ -12,7 +12,6 @@ using LiveChartsCore.SkiaSharpView.Painting;
 using ShadUI;
 using SkiaSharp;
 using Signalora.Models;
-using Signalora.Services;
 using Signalora.Services.Interface;
 
 namespace Signalora.ViewModels;
@@ -34,16 +33,21 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
     private readonly DialogManager _dialogManager;
     private readonly ToastManager _toastManager;
     private readonly PageManager _pageManager;
-    private readonly INetworkScanner _networkScanner;
+    private readonly DevicesViewModel _devicesViewModel;
     private readonly Dictionary<DateTime, List<DeviceModel>> _deviceHistory = new();
+    private bool _isInitialized = false;
 
     public DashboardViewModel(DialogManager dialogManager, ToastManager toastManager, 
-        PageManager pageManager, INetworkScanner networkScanner)
+        PageManager pageManager, DevicesViewModel devicesViewModel)
     {
         _dialogManager = dialogManager;
         _toastManager = toastManager;
         _pageManager = pageManager;
-        _networkScanner = networkScanner;
+        _devicesViewModel = devicesViewModel;
+        
+        // Subscribe to DevicesViewModel updates
+        _devicesViewModel.DevicesUpdated += OnDevicesUpdated;
+        _devicesViewModel.DeviceChanged += OnDeviceChanged;
     }
 
     public DashboardViewModel()
@@ -51,90 +55,62 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
         _dialogManager = new DialogManager();
         _toastManager = new ToastManager();
         _pageManager = new PageManager(new ServiceProvider());
-        _networkScanner = new NetworkScanner();
+        // Will be injected properly via DI
     }
 
     [AvaloniaHotReload]
     public void Initialize()
     {
-        _ = LoadDashboardDataAsync();
-        StartMonitoring();
+        if (_isInitialized) return;
+        
+        _isInitialized = true;
+        
+        // Initial load from DevicesViewModel
+        UpdateFromDevices(_devicesViewModel.Devices);
     }
 
-    private async Task LoadDashboardDataAsync()
+    private void OnDevicesUpdated(ObservableCollection<DeviceModel> devices)
     {
-        try
+        Dispatcher.UIThread.InvokeAsync(() =>
         {
-            var devices = await _networkScanner.ScanNetworkAsync();
-            
-            await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                ConnectedDevices.Clear();
-                foreach (var device in devices)
-                {
-                    ConnectedDevices.Add(device);
-                }
-                
-                UpdateStatistics();
-                SaveDeviceSnapshot();
-                _ = UpdateDevicesConnectedChartAsync();
-            });
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Error loading dashboard data: {ex.Message}");
-        }
-    }
-
-    private void StartMonitoring()
-    {
-        _networkScanner.StartMonitoring((device, changeType) =>
-        {
-            Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                switch (changeType)
-                {
-                    case DeviceChangeType.Connected:
-                        // Check if device already exists using MAC address
-                        var existingByMac = ConnectedDevices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
-                        if (existingByMac == null)
-                        {
-                            ConnectedDevices.Add(device);
-                            AddActivityLog("Connected", device.Name, "success");
-                            
-                            _toastManager
-                                .CreateToast("Device Connected")
-                                .WithContent($"{device.Name} joined the network")
-                                .DismissOnClick()
-                                .ShowSuccess();
-                        }
-                        break;
-
-                    case DeviceChangeType.Disconnected:
-                        var disconnected = ConnectedDevices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
-                        if (disconnected != null)
-                        {
-                            disconnected.Status = "Disconnected";
-                            AddActivityLog("Disconnected", device.Name, "error");
-                        }
-                        break;
-
-                    case DeviceChangeType.Updated:
-                        var existing = ConnectedDevices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
-                        if (existing != null)
-                        {
-                            // Update properties without recreating the object
-                            existing.SignalStrength = device.SignalStrength;
-                            existing.Status = device.Status;
-                            existing.IpAddress = device.IpAddress;
-                            existing.Name = device.Name;
-                        }
-                        break;
-                }
-                
-                UpdateStatistics();
-            });
+            UpdateFromDevices(devices);
         });
+    }
+
+    private void OnDeviceChanged(DeviceModel device, DeviceChangeType changeType)
+    {
+        Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            switch (changeType)
+            {
+                case DeviceChangeType.Connected:
+                    AddActivityLog("Connected", device.Name, "success");
+                    break;
+
+                case DeviceChangeType.Disconnected:
+                    AddActivityLog("Disconnected", device.Name, "error");
+                    break;
+
+                case DeviceChangeType.Updated:
+                    // Optionally log updates, or skip to avoid spam
+                    // AddActivityLog("Updated", device.Name, "info");
+                    break;
+            }
+        });
+    }
+
+    private void UpdateFromDevices(ObservableCollection<DeviceModel> devices)
+    {
+        // Update connected devices
+        ConnectedDevices.Clear();
+        foreach (var device in devices)
+        {
+            ConnectedDevices.Add(device);
+        }
+        
+        UpdateStatistics();
+        SaveDeviceSnapshot();
+        _ = UpdateDevicesConnectedChartAsync();
     }
 
     private void UpdateStatistics()
@@ -143,10 +119,8 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
         ActiveDevices = ConnectedDevices.Count(d => d.Status == "Active");
         InactiveDevices = ConnectedDevices.Count(d => d.Status != "Active");
         
-        // Calculate average bandwidth (simulated)
-        CurrentBandwidth = ActiveDevices * 5.5; // Rough estimate
+        CurrentBandwidth = ActiveDevices * 5.5;
         
-        // Calculate signal quality based on device signal strengths
         var excellentCount = ConnectedDevices.Count(d => d.SignalStrength == "Excellent");
         var goodCount = ConnectedDevices.Count(d => d.SignalStrength == "Good");
         var fairCount = ConnectedDevices.Count(d => d.SignalStrength == "Fair");
@@ -180,7 +154,6 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
             var mobileDevices = new List<double>();
             var desktopDevices = new List<double>();
 
-            // Generate data for the last 7 days
             for (int i = 6; i >= 0; i--)
             {
                 var date = DevicesSelectedDate.AddDays(-i);
@@ -194,7 +167,6 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
                 }
                 else
                 {
-                    // For dates without data, use current ratio
                     var mobileRatio = ConnectedDevices.Count > 0 
                         ? (double)ConnectedDevices.Count(d => d.Category == "Phone" || d.Category == "Tablet") / ConnectedDevices.Count 
                         : 0.6;
@@ -276,7 +248,8 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
 
     protected override void DisposeManagedResources()
     {
-        _networkScanner.StopMonitoring();
+        _devicesViewModel.DevicesUpdated -= OnDevicesUpdated;
+        _devicesViewModel.DeviceChanged -= OnDeviceChanged;
         base.DisposeManagedResources();
     }
 }

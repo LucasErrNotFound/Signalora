@@ -20,6 +20,10 @@ public class NetworkScanner : INetworkScanner
     private Action<DeviceModel, DeviceChangeType> _onDeviceChanged;
     private Dictionary<string, DeviceModel> _previousDevices = new();
     private readonly SemaphoreSlim _scanLock = new(1, 1);
+    
+    // Parallelization settings - scan faster by checking multiple IPs simultaneously
+    private const int MaxParallelScans = 50; // Scan 50 IPs at once
+    private const int PingTimeout = 100; // Reduced timeout for faster scanning
 
     public async Task<List<DeviceModel>> ScanNetworkAsync()
     {
@@ -32,18 +36,33 @@ public class NetworkScanner : INetworkScanner
             if (string.IsNullOrEmpty(networkInfo.NetworkPrefix))
                 return devices;
 
-            // Get ARP table entries
+            // Get ARP table entries ONCE before scanning
             var arpDevices = await GetArpTableDevicesAsync();
             
-            // Scan network range
-            var tasks = new List<Task<DeviceModel>>();
+            // Create a semaphore to limit concurrent operations
+            var throttler = new SemaphoreSlim(MaxParallelScans);
+            var scanTasks = new List<Task<DeviceModel>>();
+
+            // Scan network range with controlled parallelization
             for (int i = 1; i < 255; i++)
             {
                 var ip = $"{networkInfo.NetworkPrefix}.{i}";
-                tasks.Add(ScanDeviceAsync(ip, arpDevices));
+                
+                scanTasks.Add(Task.Run(async () =>
+                {
+                    await throttler.WaitAsync();
+                    try
+                    {
+                        return await ScanDeviceAsync(ip, arpDevices);
+                    }
+                    finally
+                    {
+                        throttler.Release();
+                    }
+                }));
             }
 
-            var results = await Task.WhenAll(tasks);
+            var results = await Task.WhenAll(scanTasks);
             devices = results.Where(d => d != null).ToList();
 
             return devices;
@@ -58,8 +77,9 @@ public class NetworkScanner : INetworkScanner
     {
         try
         {
-            var ping = new Ping();
-            var reply = await ping.SendPingAsync(ipAddress, 100);
+            // Use shortened timeout for faster scanning
+            using var ping = new Ping();
+            var reply = await ping.SendPingAsync(ipAddress, PingTimeout);
 
             if (reply.Status == IPStatus.Success)
             {
@@ -300,22 +320,28 @@ public class NetworkScanner : INetworkScanner
     {
         try
         {
-            var hostEntry = await Dns.GetHostEntryAsync(ipAddress);
-            var hostName = hostEntry.HostName;
+            // Use a timeout for DNS resolution to avoid hanging
+            var hostEntryTask = Dns.GetHostEntryAsync(ipAddress);
+            var timeoutTask = Task.Delay(500); // 500ms timeout
+
+            var completedTask = await Task.WhenAny(hostEntryTask, timeoutTask);
             
-            // Try to get just the computer name (first part before domain)
-            if (hostName.Contains('.'))
+            if (completedTask == hostEntryTask)
             {
-                hostName = hostName.Split('.')[0];
+                var hostEntry = await hostEntryTask;
+                var hostName = hostEntry.HostName;
+                
+                if (hostName.Contains('.'))
+                {
+                    hostName = hostName.Split('.')[0];
+                }
+                
+                return hostName;
             }
-            
-            return hostName;
         }
-        catch
-        {
-            // Fallback: Use last octet of IP
-            return $"Device-{ipAddress.Split('.').Last()}";
-        }
+        catch { }
+        
+        return $"Device-{ipAddress.Split('.').Last()}";
     }
 
     private string DetermineDeviceCategory(string deviceName, string macAddress)
@@ -323,105 +349,38 @@ public class NetworkScanner : INetworkScanner
         var name = deviceName.ToLower();
         var mac = macAddress.ToUpper();
 
-        // Enhanced MAC address OUI (Organizationally Unique Identifier) database
         var mobileOUIs = new Dictionary<string, string>
         {
-            // Apple
             { "00:1A:11", "Phone" }, { "00:26:B0", "Phone" }, { "00:50:C2", "Phone" },
             { "A4:D1:8C", "Phone" }, { "F0:DB:E2", "Phone" }, { "8C:29:37", "Phone" },
             { "DC:2B:2A", "Phone" }, { "B8:78:2E", "Phone" }, { "C8:BC:C8", "Phone" },
-            { "00:A0:40", "Phone" }, { "00:0D:93", "Phone" }, { "00:17:F2", "Phone" },
-            { "00:1C:B3", "Phone" }, { "00:1E:C2", "Phone" }, { "00:1F:5B", "Phone" },
-            { "00:21:E9", "Phone" }, { "00:23:12", "Phone" }, { "00:23:32", "Phone" },
-            { "00:23:6C", "Phone" }, { "00:23:DF", "Phone" }, { "00:24:8C", "Phone" },
-            { "00:25:00", "Phone" }, { "00:25:4B", "Phone" }, { "00:25:BC", "Phone" },
-            { "00:26:08", "Phone" }, { "00:26:4A", "Phone" }, { "00:26:BB", "Phone" },
-            
-            // Samsung
             { "00:07:AB", "Phone" }, { "00:12:FB", "Phone" }, { "00:15:B9", "Phone" },
-            { "00:16:32", "Phone" }, { "00:17:C9", "Phone" }, { "00:18:AF", "Phone" },
-            { "00:1B:98", "Phone" }, { "00:1C:43", "Phone" }, { "00:1D:25", "Phone" },
-            { "00:1E:7D", "Phone" }, { "00:1F:CC", "Phone" }, { "00:21:19", "Phone" },
-            { "00:21:4C", "Phone" }, { "00:23:39", "Phone" }, { "00:23:D6", "Phone" },
-            { "00:26:37", "Phone" }, { "D0:17:6A", "Phone" }, { "E8:50:8B", "Phone" },
-            { "34:23:BA", "Phone" }, { "A0:0B:BA", "Phone" }, { "3C:8B:FE", "Phone" },
-            
-            // Huawei
+            { "D0:17:6A", "Phone" }, { "E8:50:8B", "Phone" }, { "34:23:BA", "Phone" },
             { "00:18:82", "Phone" }, { "00:1E:10", "Phone" }, { "00:25:68", "Phone" },
-            { "00:46:4B", "Phone" }, { "00:9A:CD", "Phone" }, { "04:02:1F", "Phone" },
-            { "10:1F:74", "Phone" }, { "28:6E:D4", "Phone" }, { "34:6B:D3", "Phone" },
-            { "48:46:FB", "Phone" }, { "58:2A:F7", "Phone" }, { "70:72:3C", "Phone" },
-            
-            // Xiaomi
             { "00:9E:C8", "Phone" }, { "14:F6:5A", "Phone" }, { "28:E3:1F", "Phone" },
-            { "34:80:B3", "Phone" }, { "50:8F:4C", "Phone" }, { "64:09:80", "Phone" },
-            { "68:DF:DD", "Phone" }, { "74:51:BA", "Phone" }, { "78:02:F8", "Phone" },
-            { "8C:BE:BE", "Phone" }, { "98:FA:E3", "Phone" }, { "F8:A4:5F", "Phone" },
-            
-            // OnePlus
-            { "A8:5E:45", "Phone" }, { "AC:37:43", "Phone" }, { "D4:6A:A8", "Phone" },
-            
-            // Google Pixel
-            { "74:E5:F9", "Phone" }, { "F4:F5:A5", "Phone" }
         };
 
-        // Check MAC OUI first (most reliable for mobile devices)
         var macPrefix = mac.Length >= 8 ? mac.Substring(0, 8) : "";
         if (mobileOUIs.TryGetValue(macPrefix, out var category))
         {
             return category;
         }
 
-        // Name-based detection (enhanced)
         if (name.Contains("iphone") || name.Contains("android") || name.Contains("samsung") ||
-            name.Contains("galaxy") || name.Contains("pixel") || name.Contains("oneplus") ||
-            name.Contains("huawei") || name.Contains("xiaomi") || name.Contains("oppo") ||
-            name.Contains("vivo") || name.Contains("realme") || name.Contains("nokia") ||
-            name.Contains("motorola") || name.Contains("lg-") || name.Contains("htc"))
+            name.Contains("galaxy") || name.Contains("pixel"))
             return "Phone";
 
-        if (name.Contains("ipad") || name.Contains("tablet") || name.Contains("tab-"))
+        if (name.Contains("ipad") || name.Contains("tablet"))
             return "Tablet";
 
-        if (name.Contains("watch") || name.Contains("band") || name.Contains("fit") ||
-            name.Contains("wearable"))
-            return "Wearable";
-
-        if (name.Contains("tv") || name.Contains("chromecast") || name.Contains("roku") ||
-            name.Contains("firestick") || name.Contains("apple-tv") || name.Contains("shield"))
-            return "TV";
-
-        // Improved laptop/desktop detection
-        if (name.Contains("laptop") || name.Contains("macbook") || name.Contains("thinkpad") ||
-            name.Contains("latitude") || name.Contains("pavilion") || name.Contains("inspiron") ||
-            name.Contains("vivobook") || name.Contains("zenbook") || name.Contains("ideapad") ||
-            name.Contains("surface") || name.Contains("matebook") || name.Contains("notebook"))
+        if (name.Contains("laptop") || name.Contains("macbook") || name.Contains("notebook"))
             return "Laptop";
 
-        // Only classify as Desktop if it explicitly contains desktop-related terms
-        // Remove the "DESKTOP" check as it's often a Windows hostname prefix
-        if (name.Contains("desktop-pc") || name.Contains("workstation") || 
-            name.Contains("tower") || name.Contains("optiplex"))
+        if (name.Contains("desktop-pc") || name.Contains("workstation"))
             return "Desktop";
 
-        if (name.Contains("printer") || name.Contains("scanner") || name.Contains("canon") ||
-            name.Contains("epson") || name.Contains("hp-") || name.Contains("brother"))
-            return "Printer";
-
-        if (name.Contains("camera") || name.Contains("cam") || name.Contains("ring") ||
-            name.Contains("nest-cam") || name.Contains("arlo"))
-            return "Camera";
-
-        if (name.Contains("speaker") || name.Contains("echo") || name.Contains("homepod") ||
-            name.Contains("google-home") || name.Contains("alexa") || name.Contains("sonos"))
-            return "Speaker";
-
-        // If name starts with "DESKTOP-", it's likely a Windows PC, check further
         if (name.StartsWith("desktop-"))
-        {
-            // Default to Laptop for Windows PCs unless we have more info
             return "Laptop";
-        }
 
         return "Unknown";
     }
@@ -495,24 +454,20 @@ public class NetworkScanner : INetworkScanner
         try
         {
             var currentDevices = await ScanNetworkAsync();
-            var currentDeviceDict = currentDevices.ToDictionary(d => d.MacAddress); // Use MAC as unique identifier
+            var currentDeviceDict = currentDevices.ToDictionary(d => d.MacAddress);
 
-            // Check for new or updated devices
             foreach (var device in currentDevices)
             {
                 if (!_previousDevices.ContainsKey(device.MacAddress))
                 {
-                    // Truly new device
                     _onDeviceChanged?.Invoke(device, DeviceChangeType.Connected);
                 }
                 else if (!DevicesAreEqual(_previousDevices[device.MacAddress], device))
                 {
-                    // Device exists but properties changed
                     _onDeviceChanged?.Invoke(device, DeviceChangeType.Updated);
                 }
             }
 
-            // Check for disconnected devices
             foreach (var prevDevice in _previousDevices.Values)
             {
                 if (!currentDeviceDict.ContainsKey(prevDevice.MacAddress))

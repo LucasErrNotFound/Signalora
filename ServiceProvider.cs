@@ -10,7 +10,7 @@ namespace Signalora;
 [ServiceProvider]
 [Transient<MainWindowViewModel>]
 [Transient<DashboardViewModel>]
-[Transient<DevicesViewModel>]
+[Singleton<DevicesViewModel>]
 [Singleton<DialogManager>]
 [Singleton<ToastManager>]
 [Singleton<INetworkScanner, NetworkScanner>]
