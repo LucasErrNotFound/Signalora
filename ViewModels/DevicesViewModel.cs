@@ -45,6 +45,9 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
         _toastManager = toastManager;
         _pageManager = pageManager;
         _networkScanner = networkScanner;
+        
+        _ = ScanNetworkAsync();
+        StartMonitoring();
     }
 
     public DevicesViewModel()
@@ -58,8 +61,6 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
     [AvaloniaHotReload]
     public void Initialize()
     {
-        _ = ScanNetworkAsync();
-        StartMonitoring();
     }
     
     [RelayCommand]
@@ -73,7 +74,9 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
             
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
+                // Clear existing devices before adding new ones
                 Devices.Clear();
+                
                 foreach (var device in devices)
                 {
                     device.Id = Devices.Count + 1;
@@ -85,7 +88,7 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                 
                 _toastManager
                     .CreateToast("Scan Complete")
-                    .WithContent($"Found {devices.Count}  device(s) on the network")
+                    .WithContent($"Found {devices.Count} device(s) on the network")
                     .DismissOnClick()
                     .ShowSuccess();
             });
@@ -116,21 +119,27 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                 switch (changeType)
                 {
                     case DeviceChangeType.Connected:
-                        device.Id = Devices.Count + 1;
-                        Devices.Add(device);
-                        
-                        _toastManager
-                            .CreateToast("Device Connected")
-                            .WithContent($"{device.Name} ({device.IpAddress})")
-                            .DismissOnClick()
-                            .ShowSuccess();
+                        // Check if device already exists (using MAC address as unique identifier)
+                        var existingByMac = Devices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
+                        if (existingByMac == null)
+                        {
+                            device.Id = Devices.Count + 1;
+                            Devices.Add(device);
+                            
+                            _toastManager
+                                .CreateToast("Device Connected")
+                                .WithContent($"{device.Name} ({device.IpAddress})")
+                                .DismissOnClick()
+                                .ShowSuccess();
+                        }
                         break;
 
                     case DeviceChangeType.Disconnected:
-                        var disconnectedDevice = Devices.FirstOrDefault(d => d.IpAddress == device.IpAddress);
+                        var disconnectedDevice = Devices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
                         if (disconnectedDevice != null)
                         {
                             disconnectedDevice.Status = "Disconnected";
+                            
                             _toastManager
                                 .CreateToast("Device Disconnected")
                                 .WithContent($"{device.Name} ({device.IpAddress})")
@@ -140,11 +149,14 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
                         break;
 
                     case DeviceChangeType.Updated:
-                        var existingDevice = Devices.FirstOrDefault(d => d.IpAddress == device.IpAddress);
+                        var existingDevice = Devices.FirstOrDefault(d => d.MacAddress == device.MacAddress);
                         if (existingDevice != null)
                         {
+                            // Update properties without recreating the object
                             existingDevice.SignalStrength = device.SignalStrength;
                             existingDevice.Status = device.Status;
+                            existingDevice.IpAddress = device.IpAddress; // IP might have changed
+                            existingDevice.Name = device.Name;
                         }
                         break;
                 }
