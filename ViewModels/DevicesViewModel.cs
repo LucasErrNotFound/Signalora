@@ -52,6 +52,13 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
         _toastManager = toastManager;
         _pageManager = pageManager;
         _networkScanner = networkScanner;
+        
+        if (_isInitialized) return;
+        
+        _isInitialized = true;
+        _ = ScanNetworkAsync();
+        StartMonitoring();
+        StartAutoScan();
     }
 
     public DevicesViewModel()
@@ -65,12 +72,6 @@ public partial class DevicesViewModel : ViewModelBase, INavigable
     [AvaloniaHotReload]
     public void Initialize()
     {
-        if (_isInitialized) return;
-        
-        _isInitialized = true;
-        _ = ScanNetworkAsync();
-        StartMonitoring();
-        StartAutoScan();
     }
     
     [RelayCommand]
