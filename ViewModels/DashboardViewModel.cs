@@ -35,6 +35,7 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
     private readonly PageManager _pageManager;
     private readonly DevicesViewModel _devicesViewModel;
     private readonly Dictionary<DateTime, List<DeviceModel>> _deviceHistory = new();
+    private readonly HashSet<string> _trackedDeviceMacs = new(); // Track which devices we've already logged
     private bool _isInitialized = false;
 
     public DashboardViewModel(DialogManager dialogManager, ToastManager toastManager, 
@@ -55,7 +56,6 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
         _dialogManager = new DialogManager();
         _toastManager = new ToastManager();
         _pageManager = new PageManager(new ServiceProvider());
-        // Will be injected properly via DI
     }
 
     [AvaloniaHotReload]
@@ -84,15 +84,21 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
             switch (changeType)
             {
                 case DeviceChangeType.Connected:
-                    AddActivityLog("Connected", device.Name, "success");
+                    // Only log if we haven't tracked this device yet
+                    if (!_trackedDeviceMacs.Contains(device.MacAddress))
+                    {
+                        _trackedDeviceMacs.Add(device.MacAddress);
+                        AddActivityLog("Connected", device.Name, "success");
+                    }
                     break;
 
                 case DeviceChangeType.Disconnected:
                     AddActivityLog("Disconnected", device.Name, "error");
+                    _trackedDeviceMacs.Remove(device.MacAddress);
                     break;
 
                 case DeviceChangeType.Updated:
-                    // Optionally log updates, or skip to avoid spam
+                    // Optionally log updates - currently commented to avoid spam
                     // AddActivityLog("Updated", device.Name, "info");
                     break;
             }
@@ -101,6 +107,35 @@ public partial class DashboardViewModel : ViewModelBase, INavigable
 
     private void UpdateFromDevices(ObservableCollection<DeviceModel> devices)
     {
+        // Track new devices and create activity logs
+        foreach (var device in devices)
+        {
+            if (!_trackedDeviceMacs.Contains(device.MacAddress))
+            {
+                _trackedDeviceMacs.Add(device.MacAddress);
+                
+                // Only log active devices as "Connected" to avoid spam
+                if (device.Status == "Active")
+                {
+                    AddActivityLog("Connected", device.Name, "success");
+                }
+            }
+        }
+        
+        // Check for disconnected devices (devices that were tracked but are no longer in the list)
+        var currentMacs = new HashSet<string>(devices.Select(d => d.MacAddress));
+        var disconnectedMacs = _trackedDeviceMacs.Except(currentMacs).ToList();
+        
+        foreach (var mac in disconnectedMacs)
+        {
+            var disconnectedDevice = ConnectedDevices.FirstOrDefault(d => d.MacAddress == mac);
+            if (disconnectedDevice != null)
+            {
+                AddActivityLog("Disconnected", disconnectedDevice.Name, "error");
+            }
+            _trackedDeviceMacs.Remove(mac);
+        }
+        
         // Update connected devices
         ConnectedDevices.Clear();
         foreach (var device in devices)
